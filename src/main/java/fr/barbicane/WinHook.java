@@ -41,9 +41,10 @@ public class WinHook {
             if (nCode >= 0) {
                 switch (wParam.intValue()) {
                     case WinUser.WM_KEYUP:
-                    case WinUser.WM_KEYDOWN:
                     case WinUser.WM_SYSKEYUP:
                     case WinUser.WM_SYSKEYDOWN:
+                        break;
+                    case WinUser.WM_KEYDOWN:
 //                        ctrl+<
                         if (info.vkCode == 0xE2 && (lib.GetAsyncKeyState(0x11) != 0)) {
 //                                quit = true;
