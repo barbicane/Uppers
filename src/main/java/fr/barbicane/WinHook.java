@@ -64,19 +64,6 @@ public class WinHook {
         hhk = lib.SetWindowsHookEx(WinUser.WH_KEYBOARD_LL, keyboardHook, hMod, 0);
 
         System.out.println("Keyboard hook installed, type Ctrl+'<' to execute action");
-        // on lance un nouveau thread qui attend tant que la valeur quit est false
-//        new Thread(() -> {
-//            while (!quit) {
-//                try {
-//                    //                    Thread.sleep(10);
-//                }
-//                catch(Exception e) {
-//                    e.printStackTrace(); }
-//            }
-//            System.err.println("unhook and exit");
-//            lib.UnhookWindowsHookEx(hhk);
-//            System.exit(0);
-//        }).start();
 
         int result;
         MSG msg = new MSG();
