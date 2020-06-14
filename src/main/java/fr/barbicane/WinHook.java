@@ -22,6 +22,11 @@ public class WinHook {
 
     private static HHOOK hhk;
     private static LowLevelKeyboardProc keyboardHook;
+
+    public static User32 getLib() {
+        return lib;
+    }
+
     private static User32 lib;
 
     public static void keyboardHook() {
@@ -32,44 +37,45 @@ public class WinHook {
         HMODULE hMod = Kernel32.INSTANCE.GetModuleHandle(null);
 
         // on cree un nouvel ecouteur d'event de la forme appartenant a la librairie Win32
-        keyboardHook = new LowLevelKeyboardProc() {
-            @Override
-            public LRESULT callback(int nCode, WPARAM wParam, KBDLLHOOKSTRUCT info) {
-                if (nCode >= 0) {
-                    switch(wParam.intValue()) {
-                        case WinUser.WM_KEYUP:
-                        case WinUser.WM_KEYDOWN:
-                        case WinUser.WM_SYSKEYUP:
-                        case WinUser.WM_SYSKEYDOWN:
-                            if (info.vkCode == 0xE2 && (lib.GetAsyncKeyState(0x11)!=0)){
+        keyboardHook = (nCode, wParam, info) -> {
+            if (nCode >= 0) {
+                switch (wParam.intValue()) {
+                    case WinUser.WM_KEYUP:
+                    case WinUser.WM_KEYDOWN:
+                    case WinUser.WM_SYSKEYUP:
+                    case WinUser.WM_SYSKEYDOWN:
+//                        ctrl+<
+                        if (info.vkCode == 0xE2 && (lib.GetAsyncKeyState(0x11) != 0)) {
 //                                quit = true;
-                                ClipboardAccess.convert();
-                            }
-                    }
+                            ClipboardAccess.convert();
+                        } else if (info.vkCode == 0x51 && lib.GetAsyncKeyState(0x11) != 0 && lib.GetAsyncKeyState(0x12) != 0) {
+                            Runtime.getRuntime().exit(0);
+                        }
                 }
-
-                Pointer ptr = info.getPointer();
-                long peer = Pointer.nativeValue(ptr);
-                return lib.CallNextHookEx(hhk, nCode, wParam, new LPARAM(peer));
             }
+
+            Pointer ptr = info.getPointer();
+            long peer = Pointer.nativeValue(ptr);
+            return lib.CallNextHookEx(hhk, nCode, wParam, new LPARAM(peer));
         };
 
         // on parametre un nouveau crochet dans le flux clavier windows et on garde la reference pur annuler plus tard
         hhk = lib.SetWindowsHookEx(WinUser.WH_KEYBOARD_LL, keyboardHook, hMod, 0);
 
-        System.out.println("Keyboard hook installed, type Ctrl+'<' to quit");
+        System.out.println("Keyboard hook installed, type Ctrl+'<' to execute action");
         // on lance un nouveau thread qui attend tant que la valeur quit est false
-        new Thread() {
-            @Override
-            public void run() {
-                while (!quit) {
-                    try { Thread.sleep(10); } catch(Exception e) { }
-                }
-                System.err.println("unhook and exit");
-                lib.UnhookWindowsHookEx(hhk);
-                System.exit(0);
-            }
-        }.start();
+//        new Thread(() -> {
+//            while (!quit) {
+//                try {
+//                    //                    Thread.sleep(10);
+//                }
+//                catch(Exception e) {
+//                    e.printStackTrace(); }
+//            }
+//            System.err.println("unhook and exit");
+//            lib.UnhookWindowsHookEx(hhk);
+//            System.exit(0);
+//        }).start();
 
         int result;
         MSG msg = new MSG();
