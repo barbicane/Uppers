@@ -8,27 +8,18 @@ import com.sun.jna.platform.win32.WinUser.HHOOK;
 import com.sun.jna.platform.win32.WinUser.LowLevelKeyboardProc;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public class WinHook {
-    private volatile boolean quit;
-    private ClipboardAccess clip;
+    private final ClipboardAccess clip;
 
     public WinHook() throws AWTException {
          clip = new ClipboardAccess();
-    };
+    }
     public static HHOOK getHhk() {
         return hhk;
     }
 
     private static HHOOK hhk;
-    private static LowLevelKeyboardProc keyboardHook;
-    private static User32 lib;
-
-    public static User32 getLib() {
-        return lib;
-    }
-
 
     public void keyboardHook() {
         // recuperer l'instance de User32
@@ -38,7 +29,10 @@ public class WinHook {
         HMODULE hMod = Kernel32.INSTANCE.GetModuleHandle(null);
 
         // on cree un nouvel ecouteur d'event de la forme appartenant a la librairie Win32
-        keyboardHook = (nCode, wParam, info) -> {
+        //                        ctrl+<
+        //                                quit = true;
+        //lancement d'un nouveau Thread pour eviter comportement inatendu
+        LowLevelKeyboardProc keyboardHook = (nCode, wParam, info) -> {
             if (nCode >= 0) {
                 switch (wParam.intValue()) {
                     case WinUser.WM_KEYUP:
