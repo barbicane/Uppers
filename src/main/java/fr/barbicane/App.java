@@ -11,8 +11,9 @@ import java.awt.event.KeyEvent;
  */
 public class App 
 {
-    public static void main( String[] args ){
-        WinHook.keyboardHook();
+    public static void main( String[] args ) throws AWTException {
+        WinHook winH = new WinHook();
+        winH.keyboardHook();
         User32 winLib = WinHook.getLib();
         WinUser.HHOOK hhk = WinHook.getHhk();
         // permet de lancer un thread a l'arret de la JVM

@@ -1,35 +1,36 @@
 package fr.barbicane;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Kernel32;
-import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.*;
 import com.sun.jna.platform.win32.WinDef.HMODULE;
-import com.sun.jna.platform.win32.WinDef.LRESULT;
-import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
-import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.HHOOK;
-import com.sun.jna.platform.win32.WinUser.KBDLLHOOKSTRUCT;
 import com.sun.jna.platform.win32.WinUser.LowLevelKeyboardProc;
 import com.sun.jna.platform.win32.WinUser.MSG;
+import java.awt.*;
+import java.awt.event.KeyEvent;
 
 public class WinHook {
-    private static volatile boolean quit;
+    private volatile boolean quit;
+    private ClipboardAccess clip;
 
+    public WinHook() throws AWTException {
+         clip = new ClipboardAccess();
+    };
     public static HHOOK getHhk() {
         return hhk;
     }
 
     private static HHOOK hhk;
     private static LowLevelKeyboardProc keyboardHook;
+    private static User32 lib;
 
     public static User32 getLib() {
         return lib;
     }
 
-    private static User32 lib;
 
-    public static void keyboardHook() {
+    public void keyboardHook() {
         // recuperer l'instance de User32
         final User32 lib = User32.INSTANCE;
 
@@ -48,18 +49,17 @@ public class WinHook {
 //                        ctrl+<
                         if (info.vkCode == 0xE2 && (lib.GetAsyncKeyState(0x11) != 0)) {
 //                                quit = true;
-                            ClipboardAccess.convert();
+                            //lancement d'un nouveau Thread pour eviter comportement inatendu
+                            new Thread(clip).start();
                         } else if (info.vkCode == 0x51 && lib.GetAsyncKeyState(0x11) != 0 && lib.GetAsyncKeyState(0x12) != 0) {
                             Runtime.getRuntime().exit(0);
                         }
                 }
             }
-
             Pointer ptr = info.getPointer();
             long peer = Pointer.nativeValue(ptr);
             return lib.CallNextHookEx(hhk, nCode, wParam, new LPARAM(peer));
         };
-
         // on parametre un nouveau crochet dans le flux clavier windows et on garde la reference pur annuler plus tard
         hhk = lib.SetWindowsHookEx(WinUser.WH_KEYBOARD_LL, keyboardHook, hMod, 0);
 
